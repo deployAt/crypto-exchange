@@ -11,7 +11,6 @@ contract('Token', ([deployer, receiver, exchange]) => {
   const symbol = 'DAPP'
   const decimals = '18'
   const totalSupply = tokens(1000000).toString()
-
   let token
 
   beforeEach(async () => {
@@ -45,13 +44,11 @@ contract('Token', ([deployer, receiver, exchange]) => {
     })
   })
 
-
   describe('sending tokens', () => {
     let result
     let amount
 
     describe('success', async () => {
-
       beforeEach(async () => {
         amount = tokens(100)
         result = await token.transfer(receiver, tokens(100).toString(), { from: deployer })
@@ -74,7 +71,6 @@ contract('Token', ([deployer, receiver, exchange]) => {
         event.to.should.eq(receiver, 'to is correct')
         event.value.toString().should.eq(amount.toString(), 'value is correct')
       })
-
     })
 
     describe('failure', async () => {
@@ -93,10 +89,7 @@ contract('Token', ([deployer, receiver, exchange]) => {
         await token.transfer(0x0, tokens(100), { from: deployer })
           .should.be.rejectedWith('invalid address (arg="_to", coderType="address", value=0)')
       })
-
-
     })
-
   })
 
   describe('approving tokens', () => {
@@ -122,8 +115,6 @@ contract('Token', ([deployer, receiver, exchange]) => {
         event.spender.should.eq(exchange, 'spender is correct')
         event.value.toString().should.eq(amount.toString(), 'value is correct')
       })
-
-
     })
 
     describe('failure', () => {
@@ -132,10 +123,7 @@ contract('Token', ([deployer, receiver, exchange]) => {
           .should.be.rejectedWith('invalid address (arg="_spender", coderType="address", value=0)')
       })
     })
-
-
   })
-
 
   describe('delegated token transfers', () => {
     let result
