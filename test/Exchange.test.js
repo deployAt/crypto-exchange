@@ -242,8 +242,81 @@ contract('Exchange', ([deployer, feeAccount, user1, user2]) => {
     beforeEach(async () => {
       //user1 deposits ether
       await exchange.depositEther({ from: user1, value: ether(1) })
-      //user1 makes an order to buy tokens with Ether
+      //give tokens to user2
+      await token.transfer(user2, tokens(100), { from: deployer })
+      //user2 deposists token only
+      await token.approve(exchange.address, tokens(2), { from: user2 })
+      await exchange.depositToken(token.address, tokens(2), { from: user2 })
+      //user1 makes an order to buy 1 token (get) with 1 Ether (give)
       await exchange.makeOrder(token.address, tokens(1), ETHER_ADDRESS, ether(1), { from: user1 })
+    })
+
+    describe('filling orders', async () => {
+      let result
+
+      describe('success', async () => {
+        beforeEach(async () => {
+          //user2 fills order -> charges fee to user2
+          //user2 fills an order to sell 1 token and get 1 ether.
+          //user2 had 2 tokens, sold 1, -0.1 token fee charge. Left 0.9 of approved tokens & 0 ether.
+          result = await exchange.fillOrder('1', { from: user2 })
+        })
+
+        it('after executes the trade & charges fees', async () => {
+          let balance
+          balance = await exchange.balanceOf(token.address, user1)
+          balance.toString().should.equal(tokens(1).toString(), 'user1 received tokens')
+          balance = await exchange.balanceOf(ETHER_ADDRESS, user2)
+          balance.toString().should.equal(ether(1).toString(), 'user2 received ether')
+          balance = await exchange.balanceOf(ETHER_ADDRESS, user1)
+          balance.toString().should.equal('0', 'user1 ether deducted')
+          balance = await exchange.balanceOf(token.address, user2)
+          balance.toString().should.equal(tokens(0.9).toString(), 'user2 token deducted with fee aplied')
+          const feeAccount = await exchange.feeAccount()
+          balance = await exchange.balanceOf(token.address, feeAccount)
+          balance.toString().should.equal(tokens(0.1).toString(), 'feeAccount received fee')
+        })
+
+        it('updates filled orders', async () => {
+          const orderFilled = await exchange.orderFilled(1)
+          orderFilled.should.equal(true)
+        })
+
+        it('emits a "Trade event', async () => {
+          const log = result.logs[0]
+          log.event.should.eq('Trade')
+          const event = log.args
+          event.id.toString().should.equal('1')
+          event.user.should.equal(user1)
+          event.tokenGet.should.equal(token.address)
+          event.amountGet.toString().should.equal(tokens(1).toString())
+          event.tokenGive.should.equal(ETHER_ADDRESS)
+          event.amountGive.toString().should.equal(ether(1).toString())
+          event.userFill.should.equal(user2)
+          event.timestamp.toString().length.should.be.at.least(1)
+        })
+      })
+
+      describe('failure', async () => {
+        it('rejects invalid orders ids', async () => {
+          const invalidOrderId = 9999
+          await exchange.fillOrder(invalidOrderId, { from: user2 }).should.be.rejectedWith(EVM_REVERT)
+        })
+
+        it('rejects already-filled orders', async () => {
+          //fill the order
+          await exchange.fillOrder('1', { from: user2 }).should.be.fulfilled
+          //try to fill it again
+          await exchange.fillOrder('1', { from: user2 }).should.be.rejectedWith(EVM_REVERT)
+        })
+
+        it('rejects cancelled orders', async () => {
+          //canceled the order
+          await exchange.cancelOrder('1', { from: user1 }).should.be.fulfilled
+          //try to fill the order
+          await exchange.cancelOrder('1', { from: user2 }).should.be.rejectedWith(EVM_REVERT)
+        })
+      })
     })
 
     describe('cancelling orders', async () => {
