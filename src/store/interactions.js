@@ -32,7 +32,7 @@ export const loadToken = async (web3, networkId, dispatch) => {
     dispatch(tokenLoaded(token))
     return token
   } catch (error) {
-    window.alert('Contract not deployed to the current network')
+    console.log('Contract not deployed to the current network')
     return null
   }
 }
@@ -43,7 +43,7 @@ export const loadExchange = async (web3, networkId, dispatch) => {
     dispatch(exchangeLoaded(exchange))
     return exchange
   } catch (error) {
-    window.alert('Contract not deployed to the current network')
+    console.log('Contract not deployed to the current network')
     return null
   }
 }

@@ -13,6 +13,6 @@ export default function configureStore(preloadedState) {
   return createStore(
     rootReducer,
     preloadedState,
-    composeEnchancers(applyMiddleware(...middleware, loggerMiddleware))
+    composeEnchancers(applyMiddleware(...middleware))
   )
 }
