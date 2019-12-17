@@ -1,29 +1,27 @@
 import React, { Component } from 'react';
-import Web3 from 'web3';
+import { connect } from 'react-redux'
 
-import Token from '../abis/Token.json'
+import {
+  loadWeb3,
+  loadAccount,
+  loadToken,
+  loadExchange,
+} from '../store/interactions'
 import './App.css';
 
 class App extends Component {
   componentWillMount() {
-    this.loadBlockchainData()
+    this.loadBlockchainData(this.props.dispatch)
   }
 
-  async loadBlockchainData() {
-    // https://medium.com/metamask/https-medium-com-metamask-breaking-change-injecting-web3-7722797916a8
-    const ethereum = window.ethereum
-    ethereum.autoRefreshOnNetworkChange = false;
-    const web3 = new Web3(ethereum)
-    await ethereum.enable()
-    // const network = await web3.eth.net.getNetworkType()
+  async loadBlockchainData(dispatch) {
+    const web3 = await loadWeb3(dispatch)
     const networkId = await web3.eth.net.getId()
-    // const accounts = await web3.eth.getAccounts()
-    const token = new web3.eth.Contract(Token.abi, Token.networks[networkId].address)
-    const totalSupply = await token.methods.totalSupply().call()
-
-    console.log(totalSupply);
+    const account =  await loadAccount(web3, dispatch)
+    const token = await loadToken(web3, networkId, dispatch)
+    const exchange = await loadExchange(web3, networkId, dispatch)
+    // const totalSupply = await token.methods.totalSupply().call()
   }
-
 
   render() {
     return (
@@ -115,4 +113,11 @@ class App extends Component {
     );
   }
 }
-export default App
+
+function mapStateToProps(state) {
+  return {
+
+  }
+}
+
+export default connect(mapStateToProps)(App)
