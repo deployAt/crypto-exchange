@@ -1,8 +1,8 @@
-import { get } from 'lodash'
+import { get, groupBy, reject } from 'lodash'
 import { createSelector } from 'reselect'
 import moment from 'moment'
 
-import { ether, tokens, GREEN, RED } from '../helpers'
+import { ether, tokens, GREEN, RED, ETHER_ADDRESS } from '../helpers'
 
 const account = state => get(state, 'web3.account')
 export const accountSelector = createSelector(account, a => a)
@@ -23,6 +23,18 @@ export const contractsLoadedSelector = createSelector(
   (tl, el) => (tl && el)
 )
 
+//all orders
+const allOrdersLoaded = state => get(state, 'exchange.allOrders.loaded', false)
+const allOrders = state => get(state, 'exchange.allOrders.data', [])
+
+//cancelled orders
+const cancelledOrdersLoaded = state => get(state, 'exchange.cancelledOrders.loaded', false)
+export const cancelledOrdersLoadedSelector = createSelector(cancelledOrdersLoaded, loaded => loaded)
+
+const cancelledOrders = state => get(state, 'exchange.cancelledOrders.data', [])
+export const cancelledOrdersSelector = createSelector(cancelledOrders, o => o)
+
+//filled orders
 const filledOrdersLoaded = state => get(state, 'exchange.filledOrders.loaded', false)
 export const filledOrdersLoadedSelector = createSelector(filledOrdersLoaded, loaded => loaded)
 
@@ -94,4 +106,146 @@ const tokenPriceClass = (tokenPrice, orderId, previousOrder) => {
   } else {
     return RED //danger
   }
+}
+
+const openOrders = state => {
+  const all = allOrders(state)
+  const canelled = cancelledOrders(state)
+  const filled = filledOrders(state)
+
+  const openOrders = reject(all, order => {
+    const orderFilled = filled.some(o => o.id === order.id)
+    const orderCanceled = canelled.some(o => o.id === order.id)
+    return orderFilled || orderCanceled
+  })
+
+  return openOrders
+}
+
+const orderBookLoaded = state => cancelledOrdersLoaded(state) && filledOrdersLoaded(state) && allOrdersLoaded(state)
+export const orderBookLoadedSelector = createSelector(orderBookLoaded, loaded => loaded)
+
+// create the order book
+export const orderBookSelector = createSelector(
+  openOrders,
+  orders => {
+    //decorate orders
+    orders = decorateOrderBookOrders(orders)
+    //group order by orderType
+    orders = groupBy(orders, 'orderType')
+    //fetch buy orders
+    const buyOrders = get(orders, 'buy', [])
+    // sort buy orderd by token price
+    orders = {
+      ...orders,
+      buyOrders: buyOrders.sort((a, b) => b.tokenPrice - a.tokenPrice)
+    }
+    //fetch sell orders
+    const sellOrders = get(orders, 'sell', [])
+    // sort sell orderd by token price
+    orders = {
+      ...orders,
+      sellOrders: sellOrders.sort((a, b) => b.tokenPrice - a.tokenPrice)
+    }
+    return orders
+  }
+)
+
+const decorateOrderBookOrders = orders => {
+  return(
+    orders.map(order => {
+      order = decorateOrder(order)
+      order = decorateOrderBookOrder(order)
+      //decorate order book order
+      return order
+    })
+  )
+}
+
+const decorateOrderBookOrder = order => {
+  const orderType = order.tokenGive === ETHER_ADDRESS ? 'buy' : 'sell'
+  return({
+    ...order,
+    orderType,
+    orderTypeClass: (orderType === 'buy' ? GREEN : RED),
+    orderFillClass: (orderType === 'buy' ? 'sell' : 'buy')
+  })
+}
+
+export const myFilledOrdersLoadedSelector = createSelector(filledOrdersLoaded, loaded => loaded)
+
+export const myFilledOrdersSelector = createSelector(
+  account,
+  filledOrders,
+  (account, orders) => {
+    //find our orders
+    orders = orders.filter(o => o.user === account || o.userFill === account)
+    //sort by date asc
+    orders = orders.sort((a,b) => a.timestamp - b.timestamp)
+    //decorate add display attr
+    orders = decorateMyFilledOrders(orders, account)
+    return orders
+  }
+)
+
+const decorateMyFilledOrders = (orders, account) => {
+  return(
+    orders.map(order =>{
+      order = decorateOrder(order)
+      order = decorateMyFilledOrder(order, account)
+      return order
+    })
+  )
+}
+
+const decorateMyFilledOrder = (order, account) => {
+  const myOrder = order.user === account
+  let orderType
+
+  if(myOrder) {
+    orderType = order.tokenGive === ETHER_ADDRESS ? 'buy' : 'sell'
+  } else {
+    orderType = order.tokenGive === ETHER_ADDRESS ? 'sell' : 'buy'
+  }
+
+  return ({
+    ...order,
+    orderType,
+    orderTypeClass: (orderType === 'buy' ? GREEN : RED),
+    orderSign: (orderType === 'buy' ? '+' : '-')
+  })
+}
+
+export const myOpenOrdersLoadedSelector = createSelector(orderBookLoaded, loaded => loaded)
+export const myOpenOrdersSelector = createSelector(
+  account,
+  openOrders,
+  (account, orders) => {
+    //filter orders created by current account
+    orders = orders.filter(o => o.user === account)
+    //decorate add display attr
+    orders = decorateMyOpenOrders(orders)
+    //sort by date desc
+    orders = orders.sort((a, b) => b.timestamp - a.timestamp)
+    return orders
+  }
+)
+
+const decorateMyOpenOrders = (orders, account) => {
+  return (
+    orders.map(order => {
+      order = decorateOrder(order)
+      order = decorateMyOpenOrder(order, account)
+      return order
+    })
+  )
+}
+
+const decorateMyOpenOrder = (order, account) => {
+  const orderType = order.tokenGive === ETHER_ADDRESS ? 'buy' : 'sell'
+  return ({
+    ...order,
+    orderType,
+    orderTypeClass: (orderType === 'buy' ? GREEN : RED),
+  })
 }
