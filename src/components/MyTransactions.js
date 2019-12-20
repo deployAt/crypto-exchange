@@ -11,7 +11,6 @@ import {
 import Spinner from './Spinner'
 
 const showMyFilledOrders = (myFilledOrders) => {
-  console.log(myFilledOrders)
   return (
     <tbody>
       {myFilledOrders.map(order => {

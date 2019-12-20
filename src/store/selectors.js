@@ -1,4 +1,4 @@
-import { get, groupBy, reject } from 'lodash'
+import { get, groupBy, reject, maxBy, minBy } from 'lodash'
 import { createSelector } from 'reselect'
 import moment from 'moment'
 
@@ -152,7 +152,7 @@ export const orderBookSelector = createSelector(
 )
 
 const decorateOrderBookOrders = orders => {
-  return(
+  return (
     orders.map(order => {
       order = decorateOrder(order)
       order = decorateOrderBookOrder(order)
@@ -164,7 +164,7 @@ const decorateOrderBookOrders = orders => {
 
 const decorateOrderBookOrder = order => {
   const orderType = order.tokenGive === ETHER_ADDRESS ? 'buy' : 'sell'
-  return({
+  return ({
     ...order,
     orderType,
     orderTypeClass: (orderType === 'buy' ? GREEN : RED),
@@ -181,7 +181,7 @@ export const myFilledOrdersSelector = createSelector(
     //find our orders
     orders = orders.filter(o => o.user === account || o.userFill === account)
     //sort by date asc
-    orders = orders.sort((a,b) => a.timestamp - b.timestamp)
+    orders = orders.sort((a, b) => a.timestamp - b.timestamp)
     //decorate add display attr
     orders = decorateMyFilledOrders(orders, account)
     return orders
@@ -189,8 +189,8 @@ export const myFilledOrdersSelector = createSelector(
 )
 
 const decorateMyFilledOrders = (orders, account) => {
-  return(
-    orders.map(order =>{
+  return (
+    orders.map(order => {
       order = decorateOrder(order)
       order = decorateMyFilledOrder(order, account)
       return order
@@ -202,7 +202,7 @@ const decorateMyFilledOrder = (order, account) => {
   const myOrder = order.user === account
   let orderType
 
-  if(myOrder) {
+  if (myOrder) {
     orderType = order.tokenGive === ETHER_ADDRESS ? 'buy' : 'sell'
   } else {
     orderType = order.tokenGive === ETHER_ADDRESS ? 'sell' : 'buy'
@@ -248,4 +248,54 @@ const decorateMyOpenOrder = (order, account) => {
     orderType,
     orderTypeClass: (orderType === 'buy' ? GREEN : RED),
   })
+}
+
+export const priceChartLoadedSelector = createSelector(filledOrdersLoaded, loaded => loaded)
+
+export const priceChartSelector = createSelector(
+  filledOrders,
+  orders => {
+    //sort orders by date asc to compare history
+    orders = orders.sort((a, b) => a.timestamp - b.timestamp)
+    //decorate orders display atrr
+    orders = orders.map(o => decorateOrder(o))
+    //get last 2 orders for final price and price change
+    let secondLastOrder, lastOrder
+    [secondLastOrder, lastOrder] = orders.slice(orders.length - 2, orders.length)
+    //get last order price
+    const lastPrice = get(lastOrder, 'tokenPrice', 0)
+    //get second last order price
+    const secondLastPrice = get(secondLastOrder, 'tokenPrice', 0)
+
+    return ({
+      lastPrice,
+      lastPriceChange: (lastPrice >= secondLastPrice ? '+' : '-'),
+      series: [{
+        data: buildGraphData(orders)
+      }]
+    })
+  }
+)
+
+const buildGraphData = orders => {
+  //group the orders by hour for the graph
+  orders = groupBy(orders, o => moment.unix(o.timestamp).startOf('hour').format())
+  //get each hour where data exists
+  const hours = Object.keys(orders)
+  //build the graph series
+  const graphData = hours.map(hour => {
+    //fetch all the orders from current hour
+    const group = orders[hour]
+    //calculate price values - open/high/low/close
+    const open = group[0] //first order
+    const high = maxBy(group, 'tokenPrice')
+    const low = minBy(group, 'tokenPrice')
+    const close = group[group.length - 1] //last order
+
+    return({
+      x: new Date(hour),
+      y: [open.tokenPrice, high.tokenPrice, low.tokenPrice, close.tokenPrice],
+    })
+  })
+  return graphData
 }
