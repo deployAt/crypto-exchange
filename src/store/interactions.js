@@ -8,6 +8,8 @@ import {
   cancelledOrdersLoaded,
   filledOrdersLoaded,
   allOrdersLoaded,
+  orderCancelling,
+  orderCancelled,
 } from './actions'
 import Token from '../abis/Token.json'
 import Exchange from '../abis/Exchange.json'
@@ -53,8 +55,11 @@ export const loadExchange = async (web3, networkId, dispatch) => {
 
 export const loadAllOrders = async (exchange, dispatch) => {
   if (exchange) {
+    //fetch filled orders with the 'Cancel' event stream
     const cancelStream = await exchange.getPastEvents('Cancel', { fromBlock: 0, toBlock: 'latest' })
+    //format cancelled orders
     const cancelledOrders = cancelStream.map(event => event.returnValues)
+    //add cancelled orders to the redux store
     dispatch(cancelledOrdersLoaded(cancelledOrders))
 
     const tradeStream = await exchange.getPastEvents('Trade', { fromBlock: 0, toBlock: 'latest' })
@@ -64,5 +69,26 @@ export const loadAllOrders = async (exchange, dispatch) => {
     const orderStream = await exchange.getPastEvents('Order', { fromBlock: 0, toBlock: 'latest' })
     const allOrders = orderStream.map(event => event.returnValues)
     dispatch(allOrdersLoaded(allOrders))
+  }
+}
+
+export const cancelOrder = (dispatch, exchange, order, account) => {
+  dispatch(orderCancelling())
+
+  exchange.methods.cancelOrder(order.id).send({ from: account })
+    .on('transactionHash', hash => {
+      dispatch(orderCancelling())
+    })
+    .on('error', error => {
+      console.log(error)
+      window.alert('cancel order error')
+    })
+}
+
+export const subscribeToEvents = async (exchange, dispatch) => {
+  if (exchange) {
+    await exchange.events.Cancel({}, (error, event) => {
+      dispatch(orderCancelled(event.returnValues))
+    })
   }
 }
