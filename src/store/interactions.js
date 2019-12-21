@@ -10,6 +10,8 @@ import {
   allOrdersLoaded,
   orderCancelling,
   orderCancelled,
+  orderFilling,
+  orderFilled,
 } from './actions'
 import Token from '../abis/Token.json'
 import Exchange from '../abis/Exchange.json'
@@ -72,9 +74,19 @@ export const loadAllOrders = async (exchange, dispatch) => {
   }
 }
 
-export const cancelOrder = (dispatch, exchange, order, account) => {
-  dispatch(orderCancelling())
+export const subscribeToEvents = async (exchange, dispatch) => {
+  if (exchange) {
+    await exchange.events.Cancel({}, (error, event) => {
+      dispatch(orderCancelled(event.returnValues))
+    })
 
+    await exchange.events.Trade({}, (error, event) => {
+      dispatch(orderFilled(event.returnValues))
+    })
+  }
+}
+
+export const cancelOrder = (dispatch, exchange, order, account) => {
   exchange.methods.cancelOrder(order.id).send({ from: account })
     .on('transactionHash', hash => {
       dispatch(orderCancelling())
@@ -85,10 +97,14 @@ export const cancelOrder = (dispatch, exchange, order, account) => {
     })
 }
 
-export const subscribeToEvents = async (exchange, dispatch) => {
-  if (exchange) {
-    await exchange.events.Cancel({}, (error, event) => {
-      dispatch(orderCancelled(event.returnValues))
+export const fillOrder = (dispatch, exchange, order, account) => {
+  exchange.methods.fillOrder(order.id).send({ from: account })
+    .on('transactionHash', hash => {
+      dispatch(orderFilling())
     })
-  }
+    .on('error', error => {
+      console.log(error)
+      window.alert('fill order error')
+    })
 }
+
