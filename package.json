@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "Decentralized Ethereum Token Exchange",
   "private": true,
+  "engines": {
+    "node": "10.13.0"
+  },
   "dependencies": {
     "apexcharts": "3.6.3",
     "babel-polyfill": "6.26.0",

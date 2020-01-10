@@ -1,4 +1,9 @@
 //truffle migrate --reset
+//truffle migrate --network kovan
+//truffle networks
+//truffle exec scripts/seed-exchange.js
+//truffle exec scripts/seed-exchange.js --network kovan
+
 const Token = artifacts.require("Token");
 const Exchange = artifacts.require("Exchange");
 

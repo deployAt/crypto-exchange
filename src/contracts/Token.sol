@@ -34,6 +34,8 @@ contract Token {
   }
 
   function approve(address _spender, uint256 _value) public returns(bool success) {
+    //approve tokens, so Exchange can manage it for the user.
+    // ??? Why not approve ETHER ?
     require(_spender != address(0));
     allowance[msg.sender][_spender] = _value; //allowance[user1][exchange] = 10E
     emit Approval(msg.sender, _spender, _value);

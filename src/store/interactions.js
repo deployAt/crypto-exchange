@@ -12,9 +12,19 @@ import {
   orderCancelled,
   orderFilling,
   orderFilled,
+  etherBalanceLoaded,
+  tokenBalanceLoaded,
+  exchangeEtherBalanceLoaded,
+  exchangeTokenBalanceLoaded,
+  balancesLoaded,
+  balancesLoading,
+  buyOrderMaking,
+  sellOrderMaking,
+  orderMade,
 } from './actions'
 import Token from '../abis/Token.json'
 import Exchange from '../abis/Exchange.json'
+import { ETHER_ADDRESS } from '../helpers'
 
 export const loadWeb3 = async (dispatch) => {
   // https://medium.com/metamask/https-medium-com-metamask-breaking-change-injecting-web3-7722797916a8
@@ -79,9 +89,17 @@ export const subscribeToEvents = async (exchange, dispatch) => {
     await exchange.events.Cancel({}, (error, event) => {
       dispatch(orderCancelled(event.returnValues))
     })
-
     await exchange.events.Trade({}, (error, event) => {
       dispatch(orderFilled(event.returnValues))
+    })
+    await exchange.events.Deposit({}, (error, event) => {
+      dispatch(balancesLoaded())
+    })
+    await exchange.events.Withdraw({}, (error, event) => {
+      dispatch(balancesLoaded())
+    })
+    await exchange.events.Order({}, (error, event) => {
+      dispatch(orderMade(event.returnValues))
     })
   }
 }
@@ -108,3 +126,108 @@ export const fillOrder = (dispatch, exchange, order, account) => {
     })
 }
 
+export const loadBalances = async (dispatch, web3, exchange, token, account) => {
+  //ether balance in wallet
+  const etherBalance = await web3.eth.getBalance(account)
+  dispatch(etherBalanceLoaded(etherBalance))
+
+  //token balance in wallet
+  const tokenBalance = await token.methods.balanceOf(account).call()
+  dispatch(tokenBalanceLoaded(tokenBalance))
+
+  //ether balance in exchange
+  const exchangeEtherBalance = await exchange.methods.balanceOf(ETHER_ADDRESS, account).call()
+  dispatch(exchangeEtherBalanceLoaded(exchangeEtherBalance))
+
+  //token balance in exchange
+  const exchangeTokenBalance = await exchange.methods.balanceOf(token.options.address, account).call()
+  dispatch(exchangeTokenBalanceLoaded(exchangeTokenBalance))
+
+  //triger all balances loaded
+  dispatch(balancesLoaded())
+}
+
+export const depositEther = (dispatch, exchange, web3, amount, account) => {
+  exchange.methods.depositEther().send({ from: account, value: web3.utils.toWei(amount, 'ether') })
+    .on('transactionHash', hash => {
+      dispatch(balancesLoading())
+    })
+    .on('error', error => {
+      console.log(error)
+      window.alert('There was an error')
+    })
+}
+
+export const withdrawEther = (dispatch, exchange, web3, amount, account) => {
+  exchange.methods.withdrawEther(web3.utils.toWei(amount, 'ether')).send({ from: account })
+    .on('transactionHash', hash => {
+      dispatch(balancesLoading())
+    })
+    .on('error', error => {
+      console.log(error)
+      window.alert('There was an error')
+    })
+}
+
+// ??? Why approve Tokens no Ether (coz ether approve on metamask? NO! metamask pop ups)
+export const depositToken = (dispatch, exchange, web3, token, amount, account) => {
+  amount = web3.utils.toWei(amount, 'ether')
+
+  token.methods.approve(exchange.options.address, amount).send({ from: account })
+    .on('transactionHash', hash => {
+      exchange.methods.depositToken(token.options.address, amount).send({ from: account })
+        .on('transactionHash', hash => {
+          dispatch(balancesLoading())
+        })
+    })
+    .on('error', error => {
+      console.log(error)
+      window.alert('There was an error')
+    })
+}
+
+export const withdrawToken = (dispatch, exchange, web3, token, amount, account) => {
+  exchange.methods.withdrawToken(token.options.address, web3.utils.toWei(amount, 'ether')).send({ from: account })
+    .on('transactionHash', hash => {
+      dispatch(balancesLoading())
+    })
+    .on('error', error => {
+      console.log(error)
+      window.alert('There was an error')
+    })
+}
+
+// ??? what the heck ?
+// Always buy order when giving ethers and getting tokens
+export const makeBuyOrder = (dispatch, exchange, web3, token, order, account) => {
+  const tokenGet = token.options.address
+  const amountGet = web3.utils.toWei(order.amount, 'ether')
+  const tokenGive = ETHER_ADDRESS
+  const amountGive = web3.utils.toWei((order.amount * order.price).toString(), 'ether')
+
+  exchange.methods.makeOrder(tokenGet, amountGet, tokenGive, amountGive).send({ from: account })
+    .on('transactionHash', hash => {
+      dispatch(buyOrderMaking())
+    })
+    .on('error', error => {
+      console.log(error)
+      window.alert('There was an error')
+    })
+}
+
+// Always sell order when giving tokens and getting ethers
+export const makeSellOrder = (dispatch, exchange, web3, token, order, account) => {
+  const tokenGet = ETHER_ADDRESS
+  const amountGet = web3.utils.toWei((order.amount * order.price).toString(), 'ether')
+  const tokenGive = token.options.address
+  const amountGive = web3.utils.toWei(order.amount, 'ether')
+
+  exchange.methods.makeOrder(tokenGet, amountGet, tokenGive, amountGive).send({ from: account })
+    .on('transactionHash', hash => {
+      dispatch(sellOrderMaking())
+    })
+    .on('error', error => {
+      console.log(error)
+      window.alert('There was an error')
+    })
+}
