@@ -3,7 +3,7 @@
 //truffle networks
 //truffle exec scripts/seed-exchange.js
 //truffle exec scripts/seed-exchange.js --network kovan
-
+//heroku logs --tail
 const Token = artifacts.require("Token");
 const Exchange = artifacts.require("Exchange");
 

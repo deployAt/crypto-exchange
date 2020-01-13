@@ -25,15 +25,15 @@ class Trades extends Component {
   render() {
     return (
       <div className="vertical">
-        <div className="card bg-dark text-white">
+        <div className="card">
           <div className="card-header">Trades</div>
           <div className="card-body">
-            <table className="table table-dark table-sm small">
+            <table className="table table-sm small">
               <thead>
                 <tr>
                   <th>Time</th>
-                  <th>DAPP</th>
-                  <th>DAPP/ETH</th>
+                  <th>ZB</th>
+                  <th>ZB/ETH</th>
                 </tr>
               </thead>
               {this.props.filledOrdersLoaded ? showFilledOrders(this.props.filledOrders) : <Spinner type="table" />}

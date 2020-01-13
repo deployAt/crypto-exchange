@@ -20,7 +20,7 @@ const showPriceChart = (priceChart) => {
   return(
     <div className="price-chart">
       <div className="price">
-        <h4>DAPP/ETH &nbsp; {priceSymbol(priceChart.lastPriceChange)} &nbsp; {priceChart.lastPrice}</h4>
+        <h4>ZB/ETH &nbsp; {priceSymbol(priceChart.lastPriceChange)} &nbsp; {priceChart.lastPrice}</h4>
       </div>
       <Chart options={chartOptions} series={priceChart.series} type='candlestick' witdh='100%' height='100%' />
     </div>
@@ -30,7 +30,7 @@ const showPriceChart = (priceChart) => {
 class PriceChart extends Component {
   render() {
     return (
-      <div className="card bg-dark text-white">
+      <div className="card">
         <div className="card-header">
           Price Chart
         </div>

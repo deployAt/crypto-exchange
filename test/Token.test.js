@@ -1,3 +1,5 @@
+//truffle test
+//truffle test ./test/Token.test.js
 import { tokens, EVM_REVERT } from './helpers'
 
 const Token = artifacts.require('./Token')
@@ -7,8 +9,8 @@ require('chai')
   .should()
 
 contract('Token', ([deployer, receiver, exchange]) => {
-  const name = 'DApp Token'
-  const symbol = 'DAPP'
+  const name = 'Zbiegien Token'
+  const symbol = 'ZB'
   const decimals = '18'
   const totalSupply = tokens(1000000).toString()
   let token
@@ -64,7 +66,7 @@ contract('Token', ([deployer, receiver, exchange]) => {
       })
 
       it('emits a Transfer event', async () => {
-        const log = result.logs[0]
+        const log = await result.logs[0]
         log.event.should.eq('Transfer')
         const event = log.args
         event.from.toString().should.eq(deployer, 'from is correct')
@@ -176,7 +178,6 @@ contract('Token', ([deployer, receiver, exchange]) => {
         await token.transferFrom(deployer, 0x0, amount, { from: exchange })
           .should.be.rejectedWith('invalid address (arg="_to", coderType="address", value=0)')
       })
-
     })
 
   })

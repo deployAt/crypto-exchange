@@ -23,12 +23,14 @@ module.exports = {
       network_id: 42,
     }
   },
+  plugins: ['solidity-coverage'],
   contracts_directory: './src/contracts',
   contracts_build_directory: './src/abis/',
   compilers: {
     solc: {
+      version: '0.6.3',
       optimizer: {
-        engabled: true,
+        enabled: true,
         runs: 200
       }
     }

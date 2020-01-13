@@ -1,5 +1,5 @@
+
 .content  {
-  background-color: #1d1d1d;
   position: absolute;
   top: 56px;
   left: 0;
@@ -151,4 +151,14 @@ td.cancel-order {
 
 tr.order-book-order {
   cursor: pointer;
+}
+
+.yellow {
+  background-color: #f9ca00;
+  border-color: #f9ca00;
+  color: #020100;
+}
+
+.yellow:hover {
+  color: #020100;
 }

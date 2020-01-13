@@ -37,20 +37,20 @@ const showForm = props => {
   } = props
 
   return (
-    <Tabs defaultActiveKey="buy" className="bg-dark text-white">
-      <Tab eventKey="buy" title="Buy" className="bg-dark">
+    <Tabs defaultActiveKey="buy">
+      <Tab eventKey="buy" title="Buy">
         <form onSubmit={e => {
           e.preventDefault()
           makeBuyOrder(dispatch, exchange, web3, token, buyOrder, account)
         }}>
           <div className="form-group small">
-            <label>Buy Amount (DAPP)</label>
+            <label>Buy Amount (ZB)</label>
             <div className="input group">
               <input
                 type="text"
                 placeholder="Buy Amount"
                 onChange={e => dispatch(buyOrderAmountChanged(e.target.value))}
-                className="form-control form-control-sm bg-dark text-white"
+                className="form-control form-control-sm"
                 required />
             </div>
           </div>
@@ -61,28 +61,28 @@ const showForm = props => {
                 type="text"
                 placeholder="Buy Price"
                 onChange={e => dispatch(buyOrderPriceChanged(e.target.value))}
-                className="form-control form-control-sm bg-dark text-white"
+                className="form-control form-control-sm"
                 required />
             </div>
           </div>
-          <button type="submit" className="btn btn-primary btn-block btn-sm">Buy Order</button>
+          <button type="submit" className="btn yellow btn-block btn-sm">Buy Order</button>
           {showBuyTotal ? <small>Total: {buyOrder.amount * buyOrder.price} ETH</small> : null}
         </form>
       </Tab>
 
-      <Tab eventKey="sell" title="Sell" className="bg-dark">
+      <Tab eventKey="sell" title="Sell">
         <form onSubmit={e => {
           e.preventDefault()
           makeSellOrder(dispatch, exchange, web3, token, sellOrder, account)
         }}>
           <div className="form-group small">
-            <label>Sell Amount (DAPP)</label>
+            <label>Sell Amount (ZB)</label>
             <div className="input group">
               <input
                 type="text"
                 placeholder="Sell Amount"
                 onChange={e => dispatch(sellOrderAmountChanged(e.target.value))}
-                className="form-control form-control-sm bg-dark text-white"
+                className="form-control form-control-sm"
                 required />
             </div>
           </div>
@@ -93,11 +93,11 @@ const showForm = props => {
                 type="text"
                 placeholder="Sell Price"
                 onChange={e => dispatch(sellOrderPriceChanged(e.target.value))}
-                className="form-control form-control-sm bg-dark text-white"
+                className="form-control form-control-sm"
                 required />
             </div>
           </div>
-          <button type="submit" className="btn btn-primary btn-block btn-sm">Sell Order</button>
+          <button type="submit" className="btn yellow btn-block btn-sm">Sell Order</button>
           {showSellTotal ? <small>Total: {sellOrder.amount * sellOrder.price} ETH</small> : null}
         </form>
       </Tab>
@@ -109,7 +109,7 @@ const showForm = props => {
 class NewOrder extends Component {
   render() {
     return (
-      <div className="card bg-dark text-white">
+      <div className="card">
         <div className="card-header">
           New Order
         </div>

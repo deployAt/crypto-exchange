@@ -1,6 +1,6 @@
-pragma solidity ^0.5.0;
+pragma solidity ^0.6.3;
 
-import 'openzeppelin-solidity/contracts/math/SafeMath.sol';
+import './lib/SafeMath.sol';
 import './Token.sol';
 
 contract Exchange {
@@ -9,7 +9,11 @@ contract Exchange {
   address public feeAccount; // the acc that receives exchange fees
   uint256 public feePercent;
   address constant ETHER = address(0); // store ether in tokens mapping with blank address
-  mapping(address => mapping(address => uint256)) public tokens; // storeTokens infos: tokens[tokenAddr][user1] = 10E
+  //storeTokens infos: tokens[tokenAddr][user1] = 10E
+  //keeping tracks of all deposits
+  //subsets of token.balanceOf(exchange.address)
+  //AND subsets of this contract deposited Ethers
+  mapping(address => mapping(address => uint256)) public tokens;
   mapping(uint256 => _Order) public orders;
   uint256 public orderCount;
   mapping(uint256 => bool) public orderCanceled;
@@ -62,12 +66,14 @@ contract Exchange {
     feePercent = _feePercent;
   }
 
-  // if ehter is sent to this contract by mistake. Doesnt work in test???
-  function() external {
+  // if ehter is sent to this contract by mistake.
+  fallback() external {
     revert();
   }
 
   function depositEther() public payable {
+    // ether deposit to this smart contract. Unique address where was deployed
+    // exhange.options.address == address(this)
     tokens[ETHER][msg.sender] = tokens[ETHER][msg.sender].add(msg.value);
     emit Deposit(ETHER, msg.sender, msg.value, tokens[ETHER][msg.sender]);
   }
@@ -81,6 +87,7 @@ contract Exchange {
 
   function depositToken(address _token, uint256 _amount) public {
     require(_token != ETHER);
+    //exchange transfers token for the user to exchange allowance (in Token.sol)
     require(Token(_token).transferFrom(msg.sender, address(this), _amount)); //transferFrom(user1, exchange, 10)
     tokens[_token][msg.sender] = tokens[_token][msg.sender].add(_amount); // tokens[tokenAddr][user1] = 10E
     emit Deposit(_token, msg.sender, _amount, tokens[_token][msg.sender]);
@@ -98,6 +105,8 @@ contract Exchange {
     return tokens[_token][_user];
   }
 
+  //buy -> tokengGet = Token (filledOrder sell)
+  //sell -> tokenGet = Ether (filledOrder buy)
   function makeOrder(address _tokenGet, uint256 _amountGet, address _tokenGive, uint256 _amountGive) public {
     orderCount = orderCount.add(1);
     orders[orderCount] = _Order(orderCount, msg.sender, _tokenGet, _amountGet, _tokenGive, _amountGive, now);
@@ -132,6 +141,11 @@ contract Exchange {
     uint256 _feeAmount = _amountGet.mul(feePercent).div(100);
 
     //execute the trade
+    //(tests)
+    //user1 (_order.user) wants to buy 1 token for 1 ether
+    //user2 (msg.sender) sells 1 token + 0.1 fee and get 1 ether
+    //tokenGet = token / tokenGive = ether (in tests)
+    //(no tests for inversly)
     tokens[_tokenGet][msg.sender] = tokens[_tokenGet][msg.sender].sub(_amountGet.add(_feeAmount));
     tokens[_tokenGet][_user] = tokens[_tokenGet][_user].add(_amountGet);
 

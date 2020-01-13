@@ -57,30 +57,30 @@ const showMyOpenOrders = (props) => {
 class MyTransactions extends Component {
   render() {
     return (
-      <div className="card bg-dark text-white">
+      <div className="card">
         <div className="card-header">
           My Transactions
         </div>
         <div className="card-body">
-          <Tabs defaultActiveKey="trades" className="bg-dark text-white">
-            <Tab eventKey="trades" title="Trades" className="bg-dark">
-              <table className="table table-dark table-sm small">
+          <Tabs defaultActiveKey="trades">
+            <Tab eventKey="trades" title="Trades">
+              <table className="table table-sm small">
                 <thead>
                   <tr>
                     <th>Time</th>
-                    <th>DAPP</th>
-                    <th>DAPP/ETH</th>
+                    <th>ZB</th>
+                    <th>ZB/ETH</th>
                   </tr>
                 </thead>
                 {this.props.showMyFilledOrders ? showMyFilledOrders(this.props) : <Spinner type="table" />}
               </table>
             </Tab>
             <Tab eventKey="orders" title="Orders">
-              <table className="table table-dark table-sm small">
+              <table className="table table-sm small">
                 <thead>
                   <tr>
                     <th>Amount</th>
-                    <th>DAPP/ETH</th>
+                    <th>ZB/ETH</th>
                     <th>Cancel</th>
                   </tr>
                 </thead>

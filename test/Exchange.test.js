@@ -1,3 +1,5 @@
+//truffle test
+//truffle test ./test/Exchange.test.js
 import { ether, tokens, ETHER_ADDRESS, EVM_REVERT } from './helpers'
 
 const Token = artifacts.require('./Token')
@@ -13,15 +15,20 @@ contract('Exchange', ([deployer, feeAccount, user1, user2]) => {
   const feePercent = 10
 
   beforeEach(async () => {
-    token = await Token.new() //deploy token
+    //deploy token
+    //deployed to uniqueAddress this(address) in Token.sol
+    //msg.sender in constructor is default deployer acc[0]
+    token = await Token.new()
     token.transfer(user1, tokens(100), { from: deployer }) // transfer some tokens to user1
-    exchange = await Exchange.new(feeAccount, feePercent) // deploy exchange
+    //deploy exchange
+    //deployed to uniqueAddress this(address)
+    exchange = await Exchange.new(feeAccount, feePercent)
   })
 
   describe('deployment', () => {
     it('tracks the fee account', async () => {
       const result = await exchange.feeAccount()
-      result.should.equal(feeAccount) //???
+      result.should.equal(feeAccount)
     })
 
     it('tracks the fee percent', async () => {
@@ -31,7 +38,12 @@ contract('Exchange', ([deployer, feeAccount, user1, user2]) => {
   })
 
   describe('fallback', async () => {
-    // doesnt work ???
+    // if ehter is sent to this contract by mistake.
+    // Doesnt work in tests
+    // Works in metamask (canceled TX)
+    // but also works in Token address when send Ether
+    // and token doesnt have fallback function
+    // ???
     it('reverts when Ether is sent', async () => {
       await exchange.sendTransaction({ value: 1, from: user1 }).should.be.rejectedWith(EVM_REVERT)
     })

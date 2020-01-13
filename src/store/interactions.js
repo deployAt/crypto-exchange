@@ -1,4 +1,4 @@
-import Web3 from 'web3';
+import Web3 from 'web3'
 
 import {
   web3Loaded,
@@ -27,13 +27,26 @@ import Exchange from '../abis/Exchange.json'
 import { ETHER_ADDRESS } from '../helpers'
 
 export const loadWeb3 = async (dispatch) => {
-  // https://medium.com/metamask/https-medium-com-metamask-breaking-change-injecting-web3-7722797916a8
-  const ethereum = window.ethereum
-  ethereum.autoRefreshOnNetworkChange = false;
-  const web3 = new Web3(ethereum)
-  await ethereum.enable()
-  dispatch(web3Loaded(web3))
-  return web3
+  if (window.ethereum) {
+    // Modern dapp browsers
+    window.ethereum.autoRefreshOnNetworkChange = false
+    window.web3 = new Web3(window.ethereum)
+    try {
+      await window.ethereum.enable()
+      dispatch(web3Loaded(window.web3))
+      return window.web3
+    } catch (err) {
+      return null
+    }
+  } else if (window.web3) {
+    // Legacy dapp browsers
+    window.web3 = new Web3(window.web3.currentProvider)
+    dispatch(web3Loaded(window.web3))
+    return window.web3
+  } else {
+    // Non-dapp browsers
+    return null
+  }
 }
 
 export const loadAccount = async (web3, dispatch) => {
@@ -45,6 +58,8 @@ export const loadAccount = async (web3, dispatch) => {
 
 export const loadToken = async (web3, networkId, dispatch) => {
   try {
+    // unique address that contract was deployed to = Token.networks[networkId].address
+    // later can use token.options.address
     const token = new web3.eth.Contract(Token.abi, Token.networks[networkId].address)
     dispatch(tokenLoaded(token))
     return token
@@ -56,6 +71,8 @@ export const loadToken = async (web3, networkId, dispatch) => {
 
 export const loadExchange = async (web3, networkId, dispatch) => {
   try {
+    // unique address that contract was deployed to = Exchange.networks[networkId].address
+    // later can use exchange.options.address
     const exchange = new web3.eth.Contract(Exchange.abi, Exchange.networks[networkId].address)
     dispatch(exchangeLoaded(exchange))
     return exchange
@@ -93,6 +110,9 @@ export const subscribeToEvents = async (exchange, dispatch) => {
       dispatch(orderFilled(event.returnValues))
     })
     await exchange.events.Deposit({}, (error, event) => {
+      // console.log('events.Deposit', event.returnValues)
+      // to much work as do it like in order (orderMade). need to cast the returnValues and fit them
+      // in the exchange props not like a all order object.
       dispatch(balancesLoaded())
     })
     await exchange.events.Withdraw({}, (error, event) => {
@@ -124,6 +144,17 @@ export const fillOrder = (dispatch, exchange, order, account) => {
       console.log(error)
       window.alert('fill order error')
     })
+}
+
+export const loadExchangeFees = async (exchange, token) => {
+  // I need to change account that make a transactions
+  // feeaccount = ganache 1 acc
+  const feeAccount = await exchange.methods.feeAccount().call()
+  const exchangeFeesEther = await exchange.methods.balanceOf(ETHER_ADDRESS, feeAccount).call()
+  const exchangeFeesToken = await exchange.methods.balanceOf(token.options.address, feeAccount).call()
+  // console.log(ether(exchangeFeesEther))
+  // console.log(ether(exchangeFeesToken))
+  // console.log(exchange.options.address)
 }
 
 export const loadBalances = async (dispatch, web3, exchange, token, account) => {
@@ -169,7 +200,6 @@ export const withdrawEther = (dispatch, exchange, web3, amount, account) => {
     })
 }
 
-// ??? Why approve Tokens no Ether (coz ether approve on metamask? NO! metamask pop ups)
 export const depositToken = (dispatch, exchange, web3, token, amount, account) => {
   amount = web3.utils.toWei(amount, 'ether')
 
@@ -197,8 +227,7 @@ export const withdrawToken = (dispatch, exchange, web3, token, amount, account) 
     })
 }
 
-// ??? what the heck ?
-// Always buy order when giving ethers and getting tokens
+// Always buy order when giving ethers and getting tokens (shows as sell in orderBook)
 export const makeBuyOrder = (dispatch, exchange, web3, token, order, account) => {
   const tokenGet = token.options.address
   const amountGet = web3.utils.toWei(order.amount, 'ether')
@@ -215,7 +244,7 @@ export const makeBuyOrder = (dispatch, exchange, web3, token, order, account) =>
     })
 }
 
-// Always sell order when giving tokens and getting ethers
+// Always sell order when giving tokens and getting ethers (shows as buy in orderBook)
 export const makeSellOrder = (dispatch, exchange, web3, token, order, account) => {
   const tokenGet = ETHER_ADDRESS
   const amountGet = web3.utils.toWei((order.amount * order.price).toString(), 'ether')

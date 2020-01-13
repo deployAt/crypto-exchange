@@ -44,8 +44,8 @@ const showOrderBook = (props) => {
     <tbody>
       {orderBook.sellOrders.map(order => renderOrder(order, props))}
       <tr>
-        <th>DAPP</th>
-        <th>DAPP/ETH</th>
+        <th>ZB</th>
+        <th>ZB/ETH</th>
         <th>ETH</th>
       </tr>
       {orderBook.buyOrders.map(order => renderOrder(order, props))}
@@ -57,12 +57,12 @@ class OrderBook extends Component {
   render() {
     return (
       <div className="vertical">
-        <div className="card bg-dark text-white">
+        <div className="card">
           <div className="card-header">
             Order Book
               </div>
           <div className="card-body order-book">
-            <table className="table table-dark table-sm small">
+            <table className="table table-sm small">
               {this.props.showOrderBook ? showOrderBook(this.props) : <Spinner type='table' />}
             </table>
           </div>
