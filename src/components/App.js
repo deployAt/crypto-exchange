@@ -50,7 +50,7 @@ class App extends Component {
         <Navbar />
         {this.state.isError &&
           <div className="content">
-            <h3>Please connect your wallet (Metamask) and choose the Kovan Test network.</h3>
+            <h3>Please connect your wallet (Metamask) and choose the Kovan or Rinkeby test network.</h3>
           </div>}
         {this.props.contractsLoaded && <Content />}
       </Fragment>

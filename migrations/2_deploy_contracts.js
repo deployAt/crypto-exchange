@@ -4,8 +4,8 @@
 //truffle exec scripts/seed-exchange.js
 //truffle exec scripts/seed-exchange.js --network kovan
 //heroku logs --tail
-const Token = artifacts.require("Token");
-const Exchange = artifacts.require("Exchange");
+const Token = artifacts.require('Token')
+const Exchange = artifacts.require('Exchange')
 
 module.exports = async function (deployer) {
   const accounts = await web3.eth.getAccounts()
@@ -16,4 +16,4 @@ module.exports = async function (deployer) {
   const feePercent = 10
 
   await deployer.deploy(Exchange, feeAccount, feePercent)
-};
+}

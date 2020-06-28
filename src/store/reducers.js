@@ -42,29 +42,26 @@ function exchange(state = {}, action) {
         orderCancelling: false,
         cancelledOrders: {
           ...state.cancelledOrders,
-          data: [
-            ...state.cancelledOrders.data,
-            action.order,
-          ]
-        }
+          data: [...state.cancelledOrders.data, action.order],
+        },
       }
     case 'ORDER_FILLED':
       //prevent duplicate orders
-      let data
-      let index = state.filledOrders.data.findIndex(order => order.id === action.order.id)
-      if (index === -1) {
-        data = [...state.filledOrders.data, action.order]
+      let dataFilled
+      const indexFilled = state.filledOrders.data.findIndex((order) => order.id === action.order.id)
+      if (indexFilled === -1) {
+        dataFilled = [...state.filledOrders.data, action.order]
       } else {
-        data = state.filledOrders.data
+        dataFilled = state.filledOrders.data
       }
-      return ({
+      return {
         ...state,
         orderFilling: false,
         filledOrders: {
           ...state.filledOrders,
-          data
-        }
-      })
+          data: dataFilled,
+        },
+      }
     case 'ORDER_FILLING':
       return { ...state, orderFilling: true }
 
@@ -87,35 +84,36 @@ function exchange(state = {}, action) {
       return { ...state, tokenWithdrawAmount: action.amount }
 
     case 'BUY_ORDER_AMOUNT_CHANGED':
-      return { ...state, buyOrder: { ...state.buyOrder, amount: action.amount }}
+      return { ...state, buyOrder: { ...state.buyOrder, amount: action.amount } }
     case 'BUY_ORDER_PRICE_CHANGED':
-      return { ...state, buyOrder: { ...state.buyOrder, price: action.price }}
+      return { ...state, buyOrder: { ...state.buyOrder, price: action.price } }
     case 'BUY_ORDER_MAKING':
-      return { ...state, buyOrder: { ...state.buyOrder, amount: null, price: null, making: true }}
+      return { ...state, buyOrder: { ...state.buyOrder, amount: null, price: null, making: true } }
 
     case 'ORDER_MADE':
       //prevent duplicate orders
-      index = state.allOrders.data.findIndex(order => order.id === action.order.id)
-      if (index === -1) {
-        data = [...state.allOrders.data, action.order]
+      let dataMade
+      const indexMade = state.allOrders.data.findIndex((order) => order.id === action.order.id)
+      if (indexMade === -1) {
+        dataMade = [...state.allOrders.data, action.order]
       } else {
-        data = state.allOrders.data
+        dataMade = state.allOrders.data
       }
-      return ({
+      return {
         ...state,
         allOrders: {
           ...state.allOrders,
-          data
+          data: dataMade,
         },
         buyOrder: {
           ...state.buyOrder,
-          making: false
+          making: false,
         },
         sellOrder: {
           ...state.sellOrder,
-          making: false
-        }
-      })
+          making: false,
+        },
+      }
 
     case 'SELL_ORDER_AMOUNT_CHANGED':
       return { ...state, sellOrder: { ...state.sellOrder, amount: action.amount } }
@@ -123,7 +121,6 @@ function exchange(state = {}, action) {
       return { ...state, sellOrder: { ...state.sellOrder, price: action.price } }
     case 'SELL_ORDER_MAKING':
       return { ...state, sellOrder: { ...state.sellOrder, amount: null, price: null, making: true } }
-
 
     default:
       return state

@@ -1,20 +1,17 @@
 //truffle exec scripts/seed-exchange.js
 //truffle exec scripts/seed-exchange.js --network kovan
-const Token = artifacts.require("Token");
-const Exchange = artifacts.require("Exchange");
+const Token = artifacts.require('Token')
+const Exchange = artifacts.require('Exchange')
 
 const ETHER_ADDRESS = '0x0000000000000000000000000000000000000000'
-const ether = n => {
-  return new web3.utils.BN(
-    web3.utils.toWei(n.toString(), 'ether')
-  )
+const ether = (n) => {
+  return new web3.utils.BN(web3.utils.toWei(n.toString(), 'ether'))
 }
 const tokens = ether
-const wait = sec => {
+const wait = (sec) => {
   const milisec = sec * 1000
-  return new Promise(resolve => setTimeout(resolve, milisec))
+  return new Promise((resolve) => setTimeout(resolve, milisec))
 }
-
 
 module.exports = async function (callback) {
   try {
@@ -23,11 +20,11 @@ module.exports = async function (callback) {
 
     //fetch the deployed token
     const token = await Token.deployed()
-    console.log('Token fetched ', token.address);
+    console.log('Token fetched ', token.address)
 
     //fetch the deployed exchange
     const exchange = await Exchange.deployed()
-    console.log('Exchange fetched ', exchange.address);
+    console.log('Exchange fetched ', exchange.address)
 
     //give tokens to account[1]
     const sender = accounts[0]
@@ -35,7 +32,7 @@ module.exports = async function (callback) {
     let amount = web3.utils.toWei('10000', 'ether') //10,000 tokens
 
     await token.transfer(receiver, amount, { from: sender })
-    console.log(`Transfered ${amount} tokens from ${sender} to ${receiver}`);
+    console.log(`Transfered ${amount} tokens from ${sender} to ${receiver}`)
 
     // Set up exchange users
     const user1 = accounts[0]
@@ -44,16 +41,16 @@ module.exports = async function (callback) {
     // User 1 Deposit Ether
     amount = 1
     await exchange.depositEther({ from: user1, value: ether(amount) })
-    console.log(`Deposited ${amount} Ether from ${user1}`);
+    console.log(`Deposited ${amount} Ether from ${user1}`)
 
     // User 2 Approves Tokens
     amount = 10000
     await token.approve(exchange.address, tokens(amount), { from: user2 })
-    console.log(`Approved ${amount} tokens from ${user2}`);
+    console.log(`Approved ${amount} tokens from ${user2}`)
 
     // User 2 Deposits Tokens
-    await exchange.depositToken(token.address, tokens(amount), { from: user2} )
-    console.log(`Deposited ${amount} tokens from ${user2}`);
+    await exchange.depositToken(token.address, tokens(amount), { from: user2 })
+    console.log(`Deposited ${amount} tokens from ${user2}`)
 
     // -------------------------------- //
     // Seed a cancelled orders
@@ -63,12 +60,12 @@ module.exports = async function (callback) {
     let result
     let orderId
     result = await exchange.makeOrder(token.address, tokens(100), ETHER_ADDRESS, ether(0.1), { from: user1 })
-    console.log(`Made order from ${user1}`);
+    console.log(`Made order from ${user1}`)
 
     // User 2 cancells order
     orderId = result.logs[0].args.id
     await exchange.cancelOrder(orderId, { from: user1 })
-    console.log(`Cancelled order from ${user1}`);
+    console.log(`Cancelled order from ${user1}`)
 
     // -------------------------------- //
     // Seed Filled Orders
@@ -76,36 +73,36 @@ module.exports = async function (callback) {
 
     // User 1 makes order
     result = await exchange.makeOrder(token.address, tokens(100), ETHER_ADDRESS, ether(0.1), { from: user1 })
-    console.log(`Made order from ${user1}`);
+    console.log(`Made order from ${user1}`)
 
     // User 2 fills order
     orderId = result.logs[0].args.id
     await exchange.fillOrder(orderId, { from: user2 })
-    console.log(`Filled order from ${user2}`);
+    console.log(`Filled order from ${user2}`)
 
     // Wait 1 sec
     await wait(1)
 
     // User 1 makes another order
     result = await exchange.makeOrder(token.address, tokens(50), ETHER_ADDRESS, ether(0.01), { from: user1 })
-    console.log(`Made order from ${user1}`);
+    console.log(`Made order from ${user1}`)
 
     // User 2 fills another order
     orderId = result.logs[0].args.id
     await exchange.fillOrder(orderId, { from: user2 })
-    console.log(`Filled order from ${user2}`);
+    console.log(`Filled order from ${user2}`)
 
     // Wait 1 sec
     await wait(1)
 
     // User 1 makes final order
     result = await exchange.makeOrder(token.address, tokens(200), ETHER_ADDRESS, ether(0.15), { from: user1 })
-    console.log(`Made order from ${user1}`);
+    console.log(`Made order from ${user1}`)
 
     // User 2 fills final order
     orderId = result.logs[0].args.id
     await exchange.fillOrder(orderId, { from: user2 })
-    console.log(`Filled order from ${user2}`);
+    console.log(`Filled order from ${user2}`)
 
     // Wait 1 sec
     await wait(1)
@@ -115,24 +112,21 @@ module.exports = async function (callback) {
     //
 
     // User 1 makes 10 orders
-    for(let i=1; i<=10; i++) {
-      result = await exchange.makeOrder(token.address, tokens(10*i), ETHER_ADDRESS, ether(0.01), { from: user1 })
-      console.log(`Made order from ${user1}`);
+    for (let i = 1; i <= 10; i++) {
+      result = await exchange.makeOrder(token.address, tokens(10 * i), ETHER_ADDRESS, ether(0.01), { from: user1 })
+      console.log(`Made order from ${user1}`)
       await wait(1)
     }
 
     // User 2 makes 10 orders
-    for(let i=1; i<=10; i++) {
-      result = await exchange.makeOrder(ETHER_ADDRESS, ether(0.01), token.address, tokens(10*i), { from: user2 })
-      console.log(`Made order from ${user1}`);
+    for (let i = 1; i <= 10; i++) {
+      result = await exchange.makeOrder(ETHER_ADDRESS, ether(0.01), token.address, tokens(10 * i), { from: user2 })
+      console.log(`Made order from ${user1}`)
       await wait(1)
     }
-
-  }
-  catch (error) {
-    console.log(error);
+  } catch (error) {
+    console.log(error)
   }
 
   callback()
 }
-
