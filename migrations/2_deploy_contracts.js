@@ -1,5 +1,5 @@
 //truffle migrate --reset
-//truffle migrate --network kovan
+//truffle migrate --reset --network kovan
 //truffle networks
 //truffle exec scripts/seed-exchange.js
 //truffle exec scripts/seed-exchange.js --network kovan

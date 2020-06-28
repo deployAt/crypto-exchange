@@ -1,5 +1,5 @@
 //truffle exec scripts/seed-exchange.js
-//truffle exec scripts/seed-exchange.js --network kovan
+//truffle exec scripts/seed-exchange.js --network rinkeby
 const Token = artifacts.require('Token')
 const Exchange = artifacts.require('Exchange')
 
